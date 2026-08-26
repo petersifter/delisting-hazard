@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# data
+data/raw/*
+data/processed/*
+!data/**/.gitkeep
+
+# notebooks
+.ipynb_checkpoints/
+
+# secrets
+.env
+
+# WRDS data (CRSP, Compustat) is licensed and stays local
+*.parquet
+*.csv
+*.csv.gz
+*.h5
+*.dta
+*.sas7bdat
+*.duckdb
