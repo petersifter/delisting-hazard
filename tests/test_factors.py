@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from delisting.factors import alpha, to_month_end
+from delisting.factors import _fetch, alpha, to_month_end
 
 
 def _factors(index: pd.DatetimeIndex, seed: int = 0) -> pd.DataFrame:
@@ -39,3 +39,8 @@ def test_alpha_uses_every_month_when_crsp_dates_are_trading_days():
     fit = alpha(returns, factors)
     assert fit["n_months"] == 60
     assert fit["beta_Mkt-RF"] == pytest.approx(1.2)
+
+
+def test_fetch_rejects_unknown_archive():
+    with pytest.raises(ValueError, match="unknown Ken French archive"):
+        _fetch("../../etc/passwd.zip")

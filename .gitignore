@@ -14,7 +14,8 @@ data/raw/*
 data/processed/*
 !data/**/.gitkeep
 
-# notebooks
+# notebooks (their saved output can contain licensed data)
+*.ipynb
 .ipynb_checkpoints/
 
 # secrets

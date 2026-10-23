@@ -565,7 +565,7 @@ survive factor adjustment and the multiple-testing correction.
 
 ```bash
 uv sync
-uv run pytest                                   # 30 tests on synthetic data, no WRDS needed
+uv run pytest                                   # 31 tests on synthetic data, no WRDS needed
 uv run python -m delisting.wrds_extract --all --username YOU
 ```
 

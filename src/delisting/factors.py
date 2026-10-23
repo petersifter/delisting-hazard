@@ -22,6 +22,9 @@ MOMENTUM = "F-F_Momentum_Factor_CSV.zip"
 
 CACHE = Path(__file__).resolve().parents[2] / "data" / "raw"
 
+# The real CSVs are about 50 KB; anything far larger is not a factor file.
+MAX_CSV_BYTES = 10_000_000
+
 
 def _fetch(archive: str) -> pd.DataFrame:
     """Download and parse one monthly Ken French CSV.
@@ -29,12 +32,18 @@ def _fetch(archive: str) -> pd.DataFrame:
     The files open with a text preamble and switch to annual data partway down,
     so only rows whose first field looks like YYYYMM are kept.
     """
+    if archive not in (FIVE_FACTOR, MOMENTUM):
+        raise ValueError(f"unknown Ken French archive {archive!r}")
     cached = CACHE / archive.replace(".zip", ".csv")
     if not cached.exists():
         with urllib.request.urlopen(FRENCH + archive, timeout=60) as r:
             raw = r.read()
         with zipfile.ZipFile(io.BytesIO(raw)) as z:
-            cached.write_bytes(z.read(z.namelist()[0]))
+            member = z.infolist()[0]
+            if member.file_size > MAX_CSV_BYTES:
+                raise ValueError(f"{archive} unpacks to {member.file_size:,} bytes")
+            CACHE.mkdir(parents=True, exist_ok=True)
+            cached.write_bytes(z.read(member))
 
     lines = cached.read_text().splitlines()
     start = next(i for i, ln in enumerate(lines) if ln.strip()[:6].isdigit())
