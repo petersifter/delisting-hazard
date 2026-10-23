@@ -173,9 +173,14 @@ a firm that exited for the cause being modeled.
 Two cause-specific models, failure and merger, each treating the other as censored, fitted with
 `lifelines.CoxTimeVaryingFitter` and a ridge penalty of 0.01.
 
-Covariates are clipped at their training-sample 1st and 99th percentiles and standardized, so
-each hazard ratio is the change in risk per standard deviation of the covariate. The percentiles
-come from the training years only.
+Each covariate is clipped to its training-sample 1st and 99th percentiles and rescaled to [0, 1]:
+
+```math
+x' = \frac{\min(\max(x, p_{1}), p_{99}) - p_{1}}{p_{99} - p_{1}}
+```
+
+so a hazard ratio compares a firm at the 99th percentile of that covariate with one at the 1st,
+holding the others fixed. The percentiles come from the training years only.
 
 ### Train and test
 
@@ -195,17 +200,20 @@ same row.
 
 ![Hazard ratios by cause](reports/figures/hazard_ratios.png)
 
-| covariate | failure HR | merger HR | p (failure) |
-|---|---:|---:|---:|
-| `log_price` | 0.201 | 1.497 | <0.001 |
-| `ret_12m` | 0.368 | 2.054 | <0.001 |
-| `log_size` | 0.378 | 1.165 | <0.001 |
-| `vol_12m` | 2.992 | 1.288 | <0.001 |
-| `turnover` | 1.084 | 1.783 | 0.043 |
-| `log_age` | 0.990 | 1.005 | 0.73 |
+| covariate | failure HR | merger HR | failure HR per sd | p (failure) |
+|---|---:|---:|---:|---:|
+| `log_price` | 0.201 | 1.497 | 0.720 | <0.001 |
+| `ret_12m` | 0.368 | 2.054 | 0.849 | <0.001 |
+| `log_size` | 0.378 | 1.165 | 0.810 | <0.001 |
+| `vol_12m` | 2.992 | 1.288 | 1.216 | <0.001 |
+| `turnover` | 1.084 | 1.783 | 1.013 | 0.043 |
+| `log_age` | 0.990 | 1.005 | 0.998 | 0.73 |
 
-Read `log_price` as: one standard deviation higher price multiplies the monthly failure hazard by
-0.201 and the merger hazard by 1.497.
+The first two columns are 1st-to-99th-percentile ratios. Going from a 1st-percentile price to a
+99th-percentile price multiplies the monthly failure hazard by 0.201 and the merger hazard by
+1.497. That range is 4 to 6 standard deviations wide for every covariate, so the
+per-standard-deviation effects in the third column are much smaller: one sd of price lowers the
+failure hazard by about 28%.
 
 Price, size and past return lower the failure hazard and raise the merger hazard. A pooled model
 would net these against each other, which is the case for competing risks.
@@ -251,7 +259,7 @@ in sample (2.99, p < 0.0001). The section on time variation explains why.
 ### Accounting covariates
 
 With the four CHS ratios added, every accounting coefficient is significant and has the expected
-sign:
+sign (same 1st-to-99th-percentile scale):
 
 | covariate | HR | p |
 |---|---:|---:|
@@ -556,7 +564,7 @@ survive factor adjustment and the multiple-testing correction.
 
 ```bash
 uv sync
-uv run pytest                                   # 28 tests on synthetic data, no WRDS needed
+uv run pytest                                   # 30 tests on synthetic data, no WRDS needed
 uv run python -m delisting.wrds_extract --all
 ```
 

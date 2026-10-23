@@ -57,7 +57,7 @@ def hazard_ratio_figure(failure: pd.Series, merger: pd.Series) -> Path:
     ax.xaxis.set_minor_formatter(mpl.ticker.NullFormatter())
     ax.set_yticks(y, order)
     ax.grid(axis="y", visible=False)
-    ax.set_xlabel("hazard ratio per standardized covariate (log scale)")
+    ax.set_xlabel("hazard ratio, 1st vs 99th percentile of covariate (log scale)")
     ax.set_title("Cause-specific Cox models, fitted 1962-2000")
     ax.legend(loc="lower right")
     return _save(fig, "hazard_ratios")

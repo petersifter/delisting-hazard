@@ -26,10 +26,13 @@ def fit_bounds(train: pd.DataFrame, cols: list[str] = FEATURES) -> pd.DataFrame:
 
 
 def apply_bounds(df: pd.DataFrame, bounds: pd.DataFrame) -> pd.DataFrame:
-    """Clip each covariate to its training bounds and standardize it.
+    """Clip each covariate to its training bounds and rescale them to [0, 1].
 
-    Standardizing puts the covariates on one scale, so each hazard ratio is
-    the risk multiplier per standard deviation of that covariate.
+    x' = (clip(x, p1, p99) - p1) / (p99 - p1)
+
+    A coefficient on x' is the change in log hazard from the training 1st
+    percentile of x to its 99th, so exp(coef) compares a firm at the top of the
+    range with one at the bottom. It is not a per-standard-deviation effect.
     """
     out = df.copy()
     lo, hi = bounds.iloc[0], bounds.iloc[1]
