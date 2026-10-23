@@ -64,7 +64,8 @@ WHERE sharetype = 'NS' AND securitytype = 'EQTY'
 ```
 
 plus `issuertype` in {ACOR, CORP} and `primaryexch` in {N, A, Q} (NYSE, NYSE American, Nasdaq),
-applied in [`load.py`](src/delisting/load.py).
+applied in [`load.py`](src/delisting/load.py). Trading-status flags are not used as filters,
+because they drop halted and delisting securities.
 
 ### Sample
 
@@ -565,12 +566,12 @@ survive factor adjustment and the multiple-testing correction.
 ```bash
 uv sync
 uv run pytest                                   # 30 tests on synthetic data, no WRDS needed
-uv run python -m delisting.wrds_extract --all
+uv run python -m delisting.wrds_extract --all --username YOU
 ```
 
-The analysis is the functions in `src/delisting/`, run on the WRDS downloads in `data/raw/`;
-there is no single script that rebuilds every table. The factor data comes from Ken French's site
-at runtime.
+`wrds_extract` writes the five CSVs that `load.py` and `fundamentals.py` read into `data/raw/`.
+The analysis is the functions in `src/delisting/`, run on that panel; there is no single script
+that rebuilds every table. The factor data comes from Ken French's site at runtime.
 
 CRSP and Compustat are licensed and aren't in the repo; `data/` is gitignored.
 
