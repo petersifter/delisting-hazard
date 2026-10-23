@@ -86,7 +86,7 @@ def risk_scores(model: CoxTimeVaryingFitter, panel: pd.DataFrame) -> pd.DataFram
 def evaluate(model: CoxTimeVaryingFitter, test: pd.DataFrame) -> float:
     """Harrell's concordance on held-out data (0.5 is random ordering)."""
     last = risk_scores(model, test)
-    return concordance_index(last["stop"], -last["risk"], last["event"])
+    return float(concordance_index(last["stop"], -last["risk"], last["event"]))
 
 
 def add_time_interactions(
