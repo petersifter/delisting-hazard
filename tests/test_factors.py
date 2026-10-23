@@ -28,7 +28,6 @@ def test_to_month_end_duplicate_month():
 
 
 def test_alpha_with_trading_day_dates():
-    # 2020-2024 has many months whose last trading day is not the calendar month end.
     calendar = pd.date_range("2020-01-31", periods=60, freq="ME")
     trading = pd.date_range("2020-01-01", periods=60, freq="BME")
     assert (calendar != trading).sum() > 10

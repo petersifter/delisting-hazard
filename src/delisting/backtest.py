@@ -1,11 +1,3 @@
-"""Walk-forward backtest of the failure-hazard score.
-
-Coefficients drift a lot across eras (the log_price hazard ratio moves by a
-factor of 3.7), so a model fitted once on 1962-2000 is a poor guide to 2025.
-The model is refitted every few years on an expanding window and only scores
-months after its training data ends.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -14,8 +6,6 @@ import pandas as pd
 from delisting.features import FEATURES
 from delisting.model import apply_bounds, fit_bounds, fit_cox
 
-# One-way cost. Optimistic for the top-risk decile, which is mostly sub-$1
-# microcaps with wide spreads; roughly fair for the rest.
 COST_BPS = 50
 
 REFIT_YEARS = 3
@@ -23,11 +13,6 @@ BURN_IN_YEARS = 20
 
 
 def walk_forward_scores(panel: pd.DataFrame, refit_years: int = REFIT_YEARS) -> pd.DataFrame:
-    """Score each month with a model fitted only on earlier months.
-
-    Refits every `refit_years` years on all data before the block and carries
-    that model through the block.
-    """
     years = sorted(panel["date"].dt.year.unique())
     first = years[0] + BURN_IN_YEARS
     scored = []
@@ -50,11 +35,7 @@ def walk_forward_scores(panel: pd.DataFrame, refit_years: int = REFIT_YEARS) -> 
 
 
 def decile_returns(scored: pd.DataFrame, monthly: pd.DataFrame, n: int = 10) -> pd.DataFrame:
-    """Equal-weighted monthly return of each risk decile.
-
-    Covariates on row (permno, t) are lagged to t-1, so the score is known at
-    the end of t-1 and is paired with the return over month t.
-    """
+    # scores use data through t-1, so they pair with month t's return
     df = scored.merge(monthly[["permno", "date", "ret"]], on=["permno", "date"], how="inner")
     df = df.dropna(subset=["ret", "risk"])
     df["decile"] = df.groupby("date")["risk"].transform(
@@ -64,7 +45,6 @@ def decile_returns(scored: pd.DataFrame, monthly: pd.DataFrame, n: int = 10) -> 
 
 
 def turnover(scored: pd.DataFrame, decile: int, n: int = 10) -> float:
-    """Average share of a decile's names replaced each month."""
     df = scored.copy()
     df["decile"] = df.groupby("date")["risk"].transform(
         lambda s: pd.qcut(s.rank(method="first"), n, labels=False, duplicates="drop") + 1
@@ -78,12 +58,6 @@ def turnover(scored: pd.DataFrame, decile: int, n: int = 10) -> float:
 
 
 def performance(returns: pd.Series, cost_per_month: float = 0.0) -> dict[str, float]:
-    """Annualized summary of a monthly return series after costs.
-
-    The Sharpe here is compound annual return over annualized volatility, so it
-    includes the drag from volatility. `factors.deflated_sharpe` uses the
-    arithmetic monthly Sharpe instead.
-    """
     net = returns - cost_per_month
     equity = (1 + net).cumprod()
     drawdown = equity / equity.cummax() - 1

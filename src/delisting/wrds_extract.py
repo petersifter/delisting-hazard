@@ -1,13 +1,3 @@
-"""Download the CRSP and Compustat tables this project uses.
-
-Writes gzipped CSVs to data/raw/ under the names delisting.load and
-delisting.fundamentals look for, with CRSP's own column names. A file that
-already exists is skipped, so a failed run can be restarted.
-
-    uv run python -m delisting.wrds_extract --all
-    uv run python -m delisting.wrds_extract crsp_delist ccm_link
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -21,9 +11,7 @@ import wrds
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
 
-# Ordinary US common stock in the CIZ flags. issuertype and primaryexch are
-# filtered in delisting.load. Status flags (tradingstatusflg, conditionaltype)
-# are deliberately not used: they drop halted and delisting securities.
+# no status-flag filters: they would drop halted and delisting securities
 CIZ_UNIVERSE = """
       b.sharetype = 'NS' and b.securitytype = 'EQTY'
   and b.securitysubtype = 'COM' and b.usincflg = 'Y'
@@ -33,18 +21,13 @@ COMPUSTAT_FILTER = "indfmt = 'INDL' and datafmt = 'STD' and popsrc = 'D' and con
 
 
 def query(db: wrds.Connection, sql: str) -> pd.DataFrame:
-    """Run SQL through the DBAPI connection underneath wrds.
-
-    `db.raw_sql` passes pandas a SQLAlchemy 1.4 connection, which pandas 3 no
-    longer accepts, and wrds pins sqlalchemy<2.
-    """
+    """db.raw_sql fails under pandas 3 (wrds pins sqlalchemy<2), so use the DBAPI connection."""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="pandas only supports SQLAlchemy")
         return pd.read_sql_query(sql, db.connection.connection)
 
 
 def crsp_monthly(db: wrds.Connection) -> pd.DataFrame:
-    """CIZ monthly stock file joined to the security-info history in force that month."""
     return query(
         db,
         f"""
@@ -62,7 +45,6 @@ def crsp_monthly(db: wrds.Connection) -> pd.DataFrame:
 
 
 def crsp_delist(db: wrds.Connection) -> pd.DataFrame:
-    """Delisting events. delactiontype and delreasontype replace SIZ's dlstcd."""
     return query(
         db,
         """
@@ -74,7 +56,6 @@ def crsp_delist(db: wrds.Connection) -> pd.DataFrame:
 
 
 def ccm_link(db: wrds.Connection) -> pd.DataFrame:
-    """CRSP-Compustat link table, unfiltered; delisting.fundamentals filters it."""
     return query(
         db,
         """
@@ -85,7 +66,6 @@ def ccm_link(db: wrds.Connection) -> pd.DataFrame:
 
 
 def compustat_annual(db: wrds.Connection) -> pd.DataFrame:
-    """Annual fundamentals in USD, active and inactive firms."""
     return query(
         db,
         f"""
@@ -98,7 +78,6 @@ def compustat_annual(db: wrds.Connection) -> pd.DataFrame:
 
 
 def compustat_quarterly(db: wrds.Connection) -> pd.DataFrame:
-    """Quarterly fundamentals in USD, with rdq, the report date."""
     return query(
         db,
         f"""

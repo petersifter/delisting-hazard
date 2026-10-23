@@ -33,7 +33,6 @@ def _delists(permnos, outcomes):
 
 
 def test_features_lagged_one_month():
-    # Row t must carry the value computed at t-1.
     monthly = _monthly([1])
     out = build_features(monthly)
     expected = np.log(monthly["mthcap"].iloc[0])
@@ -104,6 +103,5 @@ def test_relative_covariates_demeaned():
     monthly["mb"] = [1.0] * 12 + [3.0] * 12
     delists = pd.DataFrame({"permno": [], "outcome": []})
     out = merger_covariates(monthly, delists)
-    # Two firms in one industry sit equally far either side of the median.
     by_date = out.groupby("date")["rel_mb"].sum()
     assert np.allclose(by_date.to_numpy(), 0.0)

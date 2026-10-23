@@ -24,7 +24,6 @@ def test_publication_date_fallback():
 
 
 def test_implausible_rdq_ignored():
-    # rdq before the period end, or years after it.
     datadate = pd.Series(pd.to_datetime(["2003-12-31", "2003-12-31"]))
     rdq = pd.Series(pd.to_datetime(["2003-06-01", "2010-01-01"]))
     out = publication_date(datadate, rdq)
@@ -50,7 +49,6 @@ def test_book_equity_annual_fallback():
         }
     )
     out = chs_covariates(df)
-    # Row 1 has no quarterly book equity.
     assert out["mb"].iloc[0] == 2000.0 / 1000.0
     assert out["mb"].iloc[1] == 2000.0 / 800.0
 

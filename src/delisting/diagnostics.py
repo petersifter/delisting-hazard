@@ -1,9 +1,3 @@
-"""Checks on the fitted hazard model: era stability, risk deciles, calibration.
-
-`CoxTimeVaryingFitter` has no Schoenfeld residual test, so stability is checked
-by refitting on separate eras and comparing the hazard ratios.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -21,12 +15,6 @@ ERAS = [
 
 
 def subperiod_stability(panel: pd.DataFrame, bounds: pd.DataFrame) -> pd.DataFrame:
-    """Hazard ratios refitted era by era, all on the same training bounds.
-
-    The last column is the largest ratio over the smallest. Close to 1 means the
-    effect is stable; a large value means the pooled estimate averages over
-    relationships that changed.
-    """
     out = {}
     for name, lo, hi in ERAS:
         era = panel[panel["date"].between(lo, hi)]
@@ -40,7 +28,6 @@ def subperiod_stability(panel: pd.DataFrame, bounds: pd.DataFrame) -> pd.DataFra
 
 
 def risk_decile_table(scored: pd.DataFrame) -> pd.DataFrame:
-    """Observed failure rate by predicted-risk decile."""
     df = scored.copy()
     df["decile"] = df.groupby("date")["risk"].transform(
         lambda s: pd.qcut(s.rank(method="first"), 10, labels=False, duplicates="drop") + 1
@@ -55,7 +42,6 @@ def risk_decile_table(scored: pd.DataFrame) -> pd.DataFrame:
 
 
 def score_panel(model, panel: pd.DataFrame) -> pd.DataFrame:
-    """Attach the linear predictor to every row."""
     out = panel.copy()
     out["risk"] = np.asarray(panel[FEATURES]) @ np.asarray(model.params_)
     return out
@@ -64,18 +50,7 @@ def score_panel(model, panel: pd.DataFrame) -> pd.DataFrame:
 def calibration(
     model, train: pd.DataFrame, test: pd.DataFrame, horizon: int = 12, bins: int = 10
 ) -> pd.DataFrame:
-    """Predicted against observed probability of failing within `horizon` months.
-
-    The baseline hazard is one constant, h0 = events / sum(exp(lp)) over the
-    training rows (a Breslow estimate with no duration dependence), so
-
-        P(fail within H) = 1 - exp(-H * h0 * exp(lp))
-
-    lifelines' own `baseline_cumulative_hazard_` isn't used because it is built
-    on centered covariates and stops at the longest training duration, which
-    9.5% of test rows exceed. Dropping duration dependence is a reasonable
-    approximation here because log_age is insignificant.
-    """
+    """h0 = events / sum(exp(lp)) on train; P(fail within H) = 1 - exp(-H * h0 * exp(lp))."""
     cols = list(model.params_.index)
     coef = np.asarray(model.params_)
 
@@ -86,8 +61,6 @@ def calibration(
     monthly_hazard = baseline * np.exp(lp)
     predicted = 1 - np.exp(-horizon * monthly_hazard)
 
-    # The event flag is on a firm's last row, so a row counts as a failure within
-    # the horizon if the firm failed and its last row is at most `horizon` later.
     df = test[["permno", "stop", "event"]].copy()
     df["predicted"] = predicted
     last = df.groupby("permno").agg(last_stop=("stop", "max"), failed=("event", "max"))

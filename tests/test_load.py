@@ -130,7 +130,6 @@ def test_survivor_right_censored():
 
 
 def test_delist_date_column(tmp_path):
-    # deldtprc and delnextdt also look like date columns; delistingdt is the event date.
     path = tmp_path / "delisting_information.csv.gz"
     pd.DataFrame(
         {

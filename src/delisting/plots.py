@@ -1,5 +1,3 @@
-"""Figures for the README."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -40,7 +38,6 @@ def _save(fig: plt.Figure, name: str) -> Path:
 
 
 def hazard_ratio_figure(failure: pd.Series, merger: pd.Series) -> Path:
-    """Failure and merger hazard ratios side by side, one row per covariate."""
     _style()
     order = failure.sort_values().index
     y = np.arange(len(order))
@@ -64,7 +61,6 @@ def hazard_ratio_figure(failure: pd.Series, merger: pd.Series) -> Path:
 
 
 def decile_figure(ew: pd.Series, vw: pd.Series, median: pd.Series) -> Path:
-    """Mean and median monthly return by predicted-risk decile."""
     _style()
     fig, ax = plt.subplots(figsize=(7, 3.8))
     x = np.arange(1, 11)
@@ -81,7 +77,6 @@ def decile_figure(ew: pd.Series, vw: pd.Series, median: pd.Series) -> Path:
 
 
 def equity_figure(vw: pd.DataFrame) -> Path:
-    """Growth of $1 in deciles 1 and 10 and the long/short spread, log scale."""
     _style()
     fig, ax = plt.subplots(figsize=(7, 3.8))
     curves = {
@@ -104,10 +99,6 @@ def equity_figure(vw: pd.DataFrame) -> Path:
 
 
 def stability_figure(table: pd.DataFrame) -> Path:
-    """Failure hazard ratio of each covariate, refitted era by era.
-
-    The y-axis is shared so a small drift doesn't look as large as a big one.
-    """
     _style()
     eras = [c for c in table.columns if c != "max/min"]
     fig, axes = plt.subplots(2, 3, figsize=(8.5, 4.4), sharex=True, sharey=True)
