@@ -15,19 +15,19 @@ def _factors(index: pd.DatetimeIndex, seed: int = 0) -> pd.DataFrame:
     return df
 
 
-def test_to_month_end_moves_last_trading_day_to_calendar_end():
+def test_to_month_end():
     s = pd.Series([0.01, 0.02], index=pd.to_datetime(["2025-05-30", "2025-06-30"]))
     out = to_month_end(s)
     assert list(out.index) == list(pd.to_datetime(["2025-05-31", "2025-06-30"]))
 
 
-def test_to_month_end_rejects_two_dates_in_one_month():
+def test_to_month_end_duplicate_month():
     s = pd.Series([0.01, 0.02], index=pd.to_datetime(["2025-05-29", "2025-05-30"]))
     with pytest.raises(ValueError, match="more than one"):
         to_month_end(s)
 
 
-def test_alpha_uses_every_month_when_crsp_dates_are_trading_days():
+def test_alpha_with_trading_day_dates():
     # 2020-2024 has many months whose last trading day is not the calendar month end.
     calendar = pd.date_range("2020-01-31", periods=60, freq="ME")
     trading = pd.date_range("2020-01-01", periods=60, freq="BME")

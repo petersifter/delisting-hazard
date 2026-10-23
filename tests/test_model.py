@@ -6,7 +6,7 @@ import pytest
 from delisting.model import apply_bounds, fit_bounds
 
 
-def test_apply_bounds_maps_training_percentiles_to_zero_and_one():
+def test_apply_bounds_scale():
     train = pd.DataFrame({"x": range(101)}, dtype=float)
     bounds = fit_bounds(train, cols=["x"])
     out = apply_bounds(pd.DataFrame({"x": [-50.0, 1.0, 50.0, 99.0, 500.0]}), bounds)

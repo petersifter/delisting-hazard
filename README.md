@@ -73,8 +73,8 @@ because they drop halted and delisting securities.
 |---|---:|---:|---|
 | CRSP download, 1962-01 to 2025-12 | 3,636,832 | | |
 | issuer type and exchange filters | 3,504,362 | | -132,470 |
-| remove distribution duplicates | **3,486,337** | **26,387** | -18,025 duplicate rows |
-| require 6 months of trailing history | **3,049,855** | **24,310** | -436,482 (see Limitations) |
+| remove distribution duplicates | 3,486,337 | 26,387 | -18,025 duplicate rows |
+| require 6 months of trailing history | 3,049,855 | 24,310 | -436,482 (see Limitations) |
 
 The final panel has 8,533 failures. The sample ends 2025-12-31; the delisting file's last event
 is 2025-12-30.
@@ -86,14 +86,14 @@ three-letter `delactiontype`:
 
 | code | meaning | treatment | count in panel |
 |---|---|---|---:|
-| `GDR` | dropped, failed listing standards | **event** | |
-| `GLI` | liquidation | **event** | |
-| | *failures combined* | | **9,622** |
+| `GDR` | dropped, failed listing standards | event | |
+| `GLI` | liquidation | event | |
+| | *failures combined* | | 9,622 |
 | `MER` | merger or acquisition | competing risk, censored | 12,400 |
 | `GEX` | moved exchange | not an exit, censored | 633 |
 | `LOS` | CRSP lost the feed | censored | 3 |
 | | no delisting record | still trading, censored | 3,729 |
-| | **total** | | **26,387** |
+| | total | | 26,387 |
 
 There are more mergers than failures. A pooled "firm disappeared" model would mostly be fitting
 acquisitions, often at a premium, with the same covariates as firms dropped for trading under a
@@ -148,7 +148,7 @@ contributes all the months it is known to have survived.
 
 ### Covariates
 
-Kept to six:
+The model uses six covariates:
 
 | covariate | definition |
 |---|---|
@@ -226,10 +226,11 @@ probability the model gave that firm the higher risk. 0.5 is random ordering.
 
 | model | concordance |
 |---|---:|
-| failure | **0.801** |
+| failure | 0.801 |
 | merger | 0.554 |
 
-Failure shows up in a firm's own price and size history. An acquirer's decision mostly doesn't.
+Failure shows up in a firm's own price and size history, while an acquisition depends mostly on
+the buyer.
 
 Out-of-sample failure rate by predicted-risk decile:
 
@@ -238,7 +239,7 @@ Out-of-sample failure rate by predicted-risk decile:
 | 1 (safest) | 122,774 | 2 | 0.002% |
 | 5 | 122,658 | 180 | 0.147% |
 | 9 | 122,600 | 349 | 0.285% |
-| 10 (riskiest) | 122,747 | 2,250 | **1.833%** |
+| 10 (riskiest) | 122,747 | 2,250 | 1.833% |
 
 Decile 10 holds 2,250 of the 3,285 test failures (68.5%). The ordering is clean at the top and
 noisy in the middle: deciles 3, 4 and 7 are out of order.
@@ -249,10 +250,11 @@ noisy in the middle: deciles 3, 4 and 7 are out of order.
 |---|---:|---:|
 | all six | 0.8007 | |
 | without `log_price` | 0.7807 | -0.020 |
-| without `vol_12m` | **0.8169** | **+0.016** |
+| without `vol_12m` | 0.8169 | +0.016 |
 
 Exchanges delist stocks that stay under $1, so the obvious worry is that the model has just found
-that rule. Dropping `log_price` costs 0.020 of concordance, which says it hasn't.
+that rule. Dropping `log_price` costs 0.020 of concordance, so the other covariates still carry
+most of the signal.
 
 Dropping `vol_12m` *improves* the test score, even though it has the largest hazard ratio above 1
 in sample (2.99, p < 0.0001). The section on time variation explains why.
@@ -285,8 +287,8 @@ sample:
 
 | model | failure | merger |
 |---|---:|---:|
-| market covariates only | **0.8482** | 0.5597 |
-| market + accounting | **0.8399** | 0.5538 |
+| market covariates only | 0.8482 | 0.5597 |
+| market + accounting | 0.8399 | 0.5538 |
 
 The accounting ratios make out-of-sample discrimination slightly worse. One reading is that the
 market has already put the accounting information into price and volatility by the time the
@@ -294,21 +296,21 @@ filing comes out, about 37 days after the quarter ends. It also means significan
 value out of sample are different things: `nimta` has a hazard ratio of 0.155 at p < 0.0001 and
 still doesn't help rank firms the model hasn't seen, the same pattern as `vol_12m`.
 
-Two robustness checks, neither of which changes this:
+Neither of two robustness checks changes this.
 
-**Book equity.** Fama-French book equity needs preferred stock at redemption value, then
+The first concerns book equity. Fama-French book equity needs preferred stock at redemption value, then
 liquidating value, then carrying value, and only the last is in the quarterly file. Falling back
 to the annual file (used from six months after fiscal year end) recovers 257,765 firm-months and
 lifts `mb` coverage from 76.7% to 84.1%.
 
-**Financials.** SIC 6000-6999 is usually excluded from distress models because 90% leverage is
+The second concerns financial firms. SIC 6000-6999 is usually excluded from distress models because 90% leverage is
 normal for a bank. It's 18.1% of the panel and is kept in the results above.
 
 | failure model | all firms | ex-financials |
 |---|---:|---:|
 | market covariates only | 0.8482 | 0.8568 |
 | market + accounting | 0.8399 | 0.8514 |
-| `tlmta` hazard ratio | 1.637 | **1.886** |
+| `tlmta` hazard ratio | 1.637 | 1.886 |
 
 Without financials the leverage coefficient rises from 1.637 to 1.886, both concordances go up a
 little, and the accounting ratios still hurt.
@@ -334,7 +336,7 @@ predictor (there's a test for this).
 |---|---:|
 | market covariates only | 0.5597 |
 | + accounting | 0.5538 |
-| **+ M&A covariates** | **0.5780** |
+| + M&A covariates | 0.5780 |
 
 `ind_merger_rate` has a hazard ratio of 1.590 (p < 0.0001). The gain is small, and merger timing
 stays far harder to predict than failure (0.578 against 0.801), but it's the only addition in the
@@ -357,7 +359,7 @@ wrong. Predicted probability of failing within 12 months against what happened, 
 | 8 | 3.413% | 2.302% | 0.67 |
 | 9 | 4.930% | 5.404% | 1.10 |
 | 10 (riskiest) | 9.841% | 17.860% | 1.82 |
-| **all** | **2.910%** | **3.193%** | **1.10** |
+| all | 2.910% | 3.193% | 1.10 |
 
 The overall rate is close, but the predicted range across bins is about 12x and the realized range
 about 600x. The model is far too pessimistic about safe firms and too optimistic about the
@@ -380,7 +382,7 @@ Cox assumes each covariate multiplies the baseline hazard by the same factor in 
 
 | covariate | 1962-79 | 1980-94 | 1995-2009 | 2010-25 | max/min |
 |---|---:|---:|---:|---:|---:|
-| `log_price` | 0.531 | 0.226 | 0.145 | 0.427 | **3.67** |
+| `log_price` | 0.531 | 0.226 | 0.145 | 0.427 | 3.67 |
 | `ret_12m` | 0.804 | 0.344 | 0.350 | 0.485 | 2.34 |
 | `log_size` | 0.641 | 0.335 | 0.288 | 0.414 | 2.23 |
 | `vol_12m` | 1.711 | 2.995 | 2.543 | 1.443 | 2.08 |
@@ -397,7 +399,7 @@ covariate x time interactions (time standardized) tests both:
 
 | failure model | concordance | change |
 |---|---:|---:|
-| no interactions | **0.8007** | |
+| no interactions | 0.8007 | |
 | + covariate x log(stop) | 0.7945 | -0.006 |
 | + covariate x year | 0.7775 | -0.023 |
 
@@ -446,12 +448,12 @@ Firms are ranked each month by predicted failure hazard and sorted into deciles.
 | 7 | 0.576% | 0.858% | 0.000% |
 | 8 | 0.408% | 0.754% | -0.513% |
 | 9 | 0.132% | 0.585% | -1.724% |
-| 10 (riskiest) | 0.189% | **1.935%** | **-2.703%** |
+| 10 (riskiest) | 0.189% | 1.935% | -2.703% |
 
 Mean monthly returns, and the median of firm-month returns. The value-weighted means and the
 medians fall with predicted risk, which is the distress anomaly.
 
-The equal-weighted mean jumps at decile 10. Decile 10 is mostly penny stocks:
+The equal-weighted mean jumps at decile 10, which is mostly penny stocks:
 
 | | decile 10 |
 |---|---:|
@@ -475,7 +477,7 @@ Value-weighted and rebalanced monthly. Turnover is 10.5% a month for decile 1 an
 |---|---:|---:|---:|---:|---:|
 | decile 1 long | 12.17% | 14.19% | 0.86 | -45.5% | 65.0% |
 | decile 10 long | -6.68% | 42.71% | -0.16 | -98.4% | 45.5% |
-| **long D1 / short D10** | **-1.63%** | 38.09% | **-0.04** | **-99.3%** | 59.7% |
+| long D1 / short D10 | -1.63% | 38.09% | -0.04 | -99.3% | 59.7% |
 
 528 months, after costs. Sharpe here is compound annual return over annualized volatility.
 
@@ -494,7 +496,7 @@ month end, so returns are re-dated to month end before the merge.
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | D1 long | -0.14% | -0.52 | 0.957 | -0.135 | -0.024 | 0.088 | 0.026 | 0.118 | 0.987 |
 | D10 long | -0.47% | -0.10 | 1.080 | 1.191 | -0.326 | -1.541 | 0.551 | -0.887 | 0.668 |
-| D1 - D10 | +0.33% | **0.07** | -0.123 | **-1.326** | 0.302 | **1.629** | -0.524 | **1.004** | 0.574 |
+| D1 - D10 | +0.33% | 0.07 | -0.123 | -1.326 | 0.302 | 1.629 | -0.524 | 1.004 | 0.574 |
 
 No alpha in any of them. The spread is short small stocks (SMB -1.33) and long profitable firms
 (RMW +1.63) and recent winners (MOM +1.00), since high-risk firms are small, unprofitable and
@@ -509,14 +511,14 @@ and kurtosis. Sharpe ratios here are arithmetic, annualized and before costs.
 
 | series | Sharpe | threshold | DSR | skew | kurtosis |
 |---|---:|---:|---:|---:|---:|
-| D1 - D10, value-weighted | 0.286 | 0.251 | **0.584** | -2.30 | 16.2 |
+| D1 - D10, value-weighted | 0.286 | 0.251 | 0.584 | -2.30 | 16.2 |
 | D1 - D10, equal-weighted | -0.255 | 0.251 | 0.000 | -2.59 | 19.6 |
 | D1 long | 0.929 | 0.251 | 1.000 | -0.60 | 5.1 |
 
 Below 0.95 can't be told apart from luck, and the spread's 0.584 is below it; after costs its
 Sharpe of 0.25 is right at the threshold. The long-only decile 1 passes, but the factor regression
-shows it is a 0.96-beta market portfolio with -0.14% alpha. Its Sharpe reflects the equity
-premium, not the model.
+shows it is a 0.96-beta market portfolio with -0.14% alpha. Its Sharpe comes from the equity
+premium.
 
 ### Tradeable universe
 
@@ -531,7 +533,7 @@ of at least $5 and market cap of at least $100M leaves 1,344,409 of 2,539,672 ob
 | 10 | 0.366% |
 
 D1 - D10 after costs: 4.16% a year, Sharpe 0.16, max drawdown -75.7%. Returns still fall with
-risk, but there's no money in it.
+risk, but the spread is too small and too volatile to trade.
 
 ### Conclusion
 
@@ -542,24 +544,24 @@ survive factor adjustment and the multiple-testing correction.
 
 ## Limitations
 
-- **Six months of history required.** This drops 1,089 failures and 2,077 securities. Firms that
+- Six months of history are required, which drops 1,089 failures and 2,077 securities. Firms that
   fail soon after listing are excluded and aren't a random subset, so nothing here applies to
   them.
-- **Time variation.** Era drift is large and modeling it makes things worse. Walk-forward refits
-  work around it without fixing it, and the hazard ratios are period-specific.
-- **Calibration.** Good overall, poor across bins. Use the score to rank, not to quote
-  probabilities, and the constant baseline is an approximation.
-- **Delisting file ends 2025-12-30, returns 2025-12-31.** A delisting on the 31st would show as
-  censored.
-- **Costs at 50bp one way.** Optimistic for decile-10 microcaps, about right for the rest.
-- **`turnover`** is marginal (p = 0.043) and capped at 10.
-- **`rdq` missing for 35% of quarterly rows.** Those rows use `datadate` + 90 days, which is
+- Era drift is large and modeling it makes things worse. Walk-forward refits work around it
+  without fixing it, and the hazard ratios are period-specific.
+- Calibration is good overall and poor across bins, so use the score to rank, not to quote
+  probabilities. The constant baseline is an approximation.
+- The delisting file ends 2025-12-30 and returns end 2025-12-31, so a delisting on the 31st would
+  show as censored.
+- Costs are 50bp one way: optimistic for decile-10 microcaps, about right for the rest.
+- `turnover` is marginal (p = 0.043) and capped at 10.
+- `rdq` is missing for 35% of quarterly rows. Those rows use `datadate` + 90 days, which is
   conservative but sometimes later than the real filing.
-- **The Compustat merge drops 19% of rows**, mostly smaller, younger firms, so the accounting
+- The Compustat merge drops 19% of rows, mostly smaller, younger firms, so the accounting
   results apply to a different population from the headline model.
-- **Financials are kept** in the headline results (18.1% of the panel). Excluding them doesn't
+- Financials are kept in the headline results (18.1% of the panel). Excluding them doesn't
   change the conclusion but moves the leverage coefficient a lot.
-- **US only.**
+- US only.
 
 ## Running it
 
