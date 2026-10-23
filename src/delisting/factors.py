@@ -60,6 +60,20 @@ def load_factors() -> pd.DataFrame:
     return five.join(mom, how="left")
 
 
+def to_month_end(series: pd.Series) -> pd.Series:
+    """Re-date a monthly series to calendar month end.
+
+    CRSP stamps a month with its last trading day (2025-05-30), the French files
+    with the calendar month end (2025-05-31). Joined as-is, only months that end
+    on a weekday line up.
+    """
+    out = series.copy()
+    out.index = pd.DatetimeIndex(out.index) + pd.offsets.MonthEnd(0)
+    if out.index.duplicated().any():
+        raise ValueError("more than one observation in a calendar month")
+    return out
+
+
 def alpha(returns: pd.Series, factors: pd.DataFrame, excess: bool = False) -> pd.Series:
     """OLS of a monthly return series on FF5 + momentum, HAC errors with 6 lags.
 
@@ -67,7 +81,8 @@ def alpha(returns: pd.Series, factors: pd.DataFrame, excess: bool = False) -> pd
     series has the risk-free rate taken off first (`excess=True`).
     """
     cols = ["Mkt-RF", "SMB", "HML", "RMW", "CMA", "MOM"]
-    df = pd.concat([returns.rename("r"), factors[[*cols, "RF"]]], axis=1).dropna()
+    df = pd.concat([to_month_end(returns).rename("r"), factors[[*cols, "RF"]]], axis=1)
+    df = df.dropna()
     y = df["r"] - df["RF"] if excess else df["r"]
     fit = sm.OLS(y, sm.add_constant(df[cols])).fit(cov_type="HAC", cov_kwds={"maxlags": 6})
     return pd.Series(

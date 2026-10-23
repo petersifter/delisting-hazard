@@ -14,8 +14,9 @@ Main results:
    firms. The apparent gain from adding them comes from the change in sample.
 3. Acquisitions are predicted by industry merger waves, not by the firm's own characteristics.
    That is the only addition in the project that improves out-of-sample discrimination.
-4. The return spread between low- and high-risk firms is size exposure, not alpha: factor alpha
-   t = 0.55, deflated Sharpe 0.58, and a Sharpe of 0.16 in the tradeable universe.
+4. The return spread between low- and high-risk firms is exposure to size, profitability and
+   momentum, not alpha: factor alpha t = 0.07, deflated Sharpe 0.58, and a Sharpe of 0.16 in the
+   tradeable universe.
 
 ## Motivation
 
@@ -477,16 +478,18 @@ negative whatever the mean. On arithmetic returns the spread's Sharpe is 0.29 be
 ### Factor regression
 
 Fama-French five factors plus momentum from Ken French's library, HAC standard errors with 6
-lags, 371 months.
+lags, 528 months. CRSP dates each month by its last trading day and the French files by calendar
+month end, so returns are re-dated to month end before the merge.
 
-| portfolio | alpha/yr | t | Mkt-RF | SMB | HML | $R^2$ |
-|---|---:|---:|---:|---:|---:|---:|
-| D1 long | -0.23% | -0.71 | 0.958 | -0.127 | -0.029 | 0.986 |
-| D10 long | -3.32% | -0.61 | 1.097 | 1.303 | -0.300 | 0.668 |
-| D1 - D10 | +3.19% | **0.55** | -0.139 | **-1.430** | 0.271 | 0.571 |
+| portfolio | alpha/yr | t | Mkt-RF | SMB | HML | RMW | CMA | MOM | $R^2$ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| D1 long | -0.14% | -0.52 | 0.957 | -0.135 | -0.024 | 0.088 | 0.026 | 0.118 | 0.987 |
+| D10 long | -0.47% | -0.10 | 1.080 | 1.191 | -0.326 | -1.541 | 0.551 | -0.887 | 0.668 |
+| D1 - D10 | +0.33% | **0.07** | -0.123 | **-1.326** | 0.302 | **1.629** | -0.524 | **1.004** | 0.574 |
 
-No alpha in any of them. The spread's SMB loading of -1.43 explains it: shorting high-risk firms
-means shorting small caps, and the factor model already prices that.
+No alpha in any of them. The spread is short small stocks (SMB -1.33) and long profitable firms
+(RMW +1.63) and recent winners (MOM +1.00), since high-risk firms are small, unprofitable and
+falling. The factor model already prices all three.
 
 ### Deflated Sharpe
 
@@ -503,7 +506,7 @@ and kurtosis. Sharpe ratios here are arithmetic, annualized and before costs.
 
 Below 0.95 can't be told apart from luck, and the spread's 0.584 is below it; after costs its
 Sharpe of 0.25 is right at the threshold. The long-only decile 1 passes, but the factor regression
-shows it is a 0.96-beta market portfolio with -0.23% alpha. Its Sharpe reflects the equity
+shows it is a 0.96-beta market portfolio with -0.14% alpha. Its Sharpe reflects the equity
 premium, not the model.
 
 ### Tradeable universe
@@ -523,7 +526,7 @@ risk, but there's no money in it.
 
 ### Conclusion
 
-Factor alpha (t = 0.55), the deflated Sharpe (0.584) and the tradeable backtest (Sharpe 0.16) all
+Factor alpha (t = 0.07), the deflated Sharpe (0.584) and the tradeable backtest (Sharpe 0.16) all
 agree. The hazard score predicts delisting; it doesn't predict alpha. None of this is causal, and
 it doesn't show the distress anomaly is absent in general, only that this measure of it doesn't
 survive factor adjustment and the multiple-testing correction.
@@ -553,7 +556,7 @@ survive factor adjustment and the multiple-testing correction.
 
 ```bash
 uv sync
-uv run pytest                                   # 25 tests on synthetic data, no WRDS needed
+uv run pytest                                   # 28 tests on synthetic data, no WRDS needed
 uv run python -m delisting.wrds_extract --all
 ```
 
